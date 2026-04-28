@@ -15,15 +15,15 @@ Our idea is to create an application for a music store that manages inventory,  
     - Update the user and password variables to match your local MySQL server credentials.
 
 3. Compile and Execute:
-    - Open your terminal and navigate to the src folder:
+- Open your terminal and navigate to the src folder:
 ```Bash
 cd src
 ```
-    - Compile the Java files, linking the MySQL driver:
+- Compile the Java files, linking the MySQL driver:
 ```Bash
 javac -cp ".;mysql-connector-j-9.6.0.jar" Main.java
 ```
-    - Run the compiled application:
+- Run the compiled application:
 ```Bash
 java -cp ".;mysql-connector-j-9.6.0.jar" Main
 ```
