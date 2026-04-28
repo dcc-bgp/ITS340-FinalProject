@@ -2,9 +2,7 @@
 our idea is to create an application for a music store that manages inventory,  employees, and customer data for multiple locations.
 
 # how to run project
-run the "
+run MusicStoreDB_FullSchema in MySQL Workbench running on port 3307
+change user and password in DataBaseConnection.java
+java -cp ".;mysql-connector-j-9.6.0.jar" Main
 
-# Test again
-testest test AGAIN
-this is a test
-test once AGAIN
