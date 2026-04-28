@@ -59,4 +59,70 @@ public class AlbumDAO {
 
         return albums;
     }
+    public void addAlbum(String title, String artistName, String genre, int year, int quantity, String format) {
+        String findArtistSql = "SELECT ArtistID FROM Artist WHERE ArtistName = ?";
+        String insertArtistSql = "INSERT INTO Artist (ArtistName) VALUES (?)";
+        String insertAlbumSql = "INSERT INTO Album (ArtistID, AlbumTitle, Genre, ReleaseYear, Quantity, Format) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            
+            // Check if Artist exists, if not, create them
+            PreparedStatement findArtistStmt = conn.prepareStatement(findArtistSql);
+            findArtistStmt.setString(1, artistName);
+            ResultSet rs = findArtistStmt.executeQuery();
+            
+            int artistId;
+            if (rs.next()) {
+                artistId = rs.getInt("ArtistID");
+            } else {
+                PreparedStatement insertArtistStmt = conn.prepareStatement(insertArtistSql, PreparedStatement.RETURN_GENERATED_KEYS);
+                insertArtistStmt.setString(1, artistName);
+                insertArtistStmt.executeUpdate();
+                ResultSet keys = insertArtistStmt.getGeneratedKeys();
+                keys.next();
+                artistId = keys.getInt(1);
+            }
+
+            // Insert the Album
+            PreparedStatement insertAlbumStmt = conn.prepareStatement(insertAlbumSql);
+            insertAlbumStmt.setInt(1, artistId);
+            insertAlbumStmt.setString(2, title);
+            insertAlbumStmt.setString(3, genre);
+            insertAlbumStmt.setInt(4, year);
+            insertAlbumStmt.setInt(5, quantity);
+            insertAlbumStmt.setString(6, format); // Assuming you added Format for the Factory pattern
+            insertAlbumStmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // UPDATE: Change the quantity of an existing album
+    public void updateAlbumQuantity(int albumID, int newQuantity) {
+        String sql = "UPDATE Album SET Quantity = ? WHERE AlbumID = ?";
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, newQuantity);
+            stmt.setInt(2, albumID);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // DELETE: Remove an album from the database entirely
+    public void deleteAlbum(int albumID) {
+        String sql = "DELETE FROM Album WHERE AlbumID = ?";
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, albumID);
+            stmt.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
