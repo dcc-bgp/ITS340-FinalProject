@@ -1,14 +1,13 @@
 package dao;
 
 import db.DatabaseConnection;
-import model.Album;
-import model.AlbumFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import model.Album;
+import model.AlbumFactory;
 
 public class AlbumDAO {
 
@@ -39,8 +38,10 @@ public class AlbumDAO {
                 row.put("genre", rs.getString("Genre"));
                 row.put("releaseYear", rs.getInt("ReleaseYear"));
                 row.put("quantity", rs.getInt("Quantity"));
+                String formatType = rs.getString("Format");
 
                 Album album = AlbumFactory.createAlbum(
+                        formatType,
                         (int) row.get("albumID"),
                         (String) row.get("albumTitle"),
                         (String) row.get("artistName"),

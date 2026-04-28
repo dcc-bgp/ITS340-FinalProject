@@ -1,8 +1,18 @@
 package model;
 
 public class AlbumFactory {
-    public static Album createAlbum(int albumID, String albumTitle, String artistName,
+    
+    public static Album createAlbum(String format, int albumID, String albumTitle, String artistName, 
                                     String genre, int releaseYear, int quantity) {
-        return new Album(albumID, albumTitle, artistName, genre, releaseYear, quantity);
+        
+        // The Factory decides which subclass to instantiate
+        switch (format.toUpperCase()) {
+            case "VINYL":
+                return new Vinyl(albumID, albumTitle, artistName, genre, releaseYear, quantity);
+            case "CD":
+                return new CD(albumID, albumTitle, artistName, genre, releaseYear, quantity);
+            default:
+                throw new IllegalArgumentException("Unknown media format: " + format);
+        }
     }
 }

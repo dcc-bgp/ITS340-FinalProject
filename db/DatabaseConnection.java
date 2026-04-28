@@ -8,7 +8,7 @@ public class DatabaseConnection {
     private static DatabaseConnection instance;
     private Connection connection;
 
-    private final String url = "jdbc:mysql://localhost:3306/MusicStoreDB";
+    private final String url = "jdbc:mysql://localhost:3307/MusicStoreDB";
     private final String user = "root";
     private final String password = "password";
 
