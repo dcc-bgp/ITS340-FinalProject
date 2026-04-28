@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
 import model.Album;
 import model.AlbumFactory;
 
@@ -15,10 +14,12 @@ public class AlbumDAO {
         ArrayList<Album> albums = new ArrayList<>();
 
         String sql = """
-            SELECT al.AlbumID, al.AlbumTitle, ar.ArtistName, al.Genre, al.ReleaseYear, al.Quantity
+            SELECT al.AlbumID, al.AlbumTitle, ar.ArtistName, al.Genre, al.ReleaseYear, al.Format, IFNULL(SUM(i.Quantity), 0) as Quantity
             FROM Album al
             JOIN Artist ar ON al.ArtistID = ar.ArtistID
+            LEFT JOIN Inventory i ON al.AlbumID = i.AlbumID
             WHERE al.AlbumTitle LIKE ? OR ar.ArtistName LIKE ?
+            GROUP BY al.AlbumID
             ORDER BY ar.ArtistName, al.AlbumTitle
         """;
 
@@ -31,25 +32,15 @@ public class AlbumDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                HashMap<String, Object> row = new HashMap<>();
-                row.put("albumID", rs.getInt("AlbumID"));
-                row.put("albumTitle", rs.getString("AlbumTitle"));
-                row.put("artistName", rs.getString("ArtistName"));
-                row.put("genre", rs.getString("Genre"));
-                row.put("releaseYear", rs.getInt("ReleaseYear"));
-                row.put("quantity", rs.getInt("Quantity"));
-                String formatType = rs.getString("Format");
-
                 Album album = AlbumFactory.createAlbum(
-                        formatType,
-                        (int) row.get("albumID"),
-                        (String) row.get("albumTitle"),
-                        (String) row.get("artistName"),
-                        (String) row.get("genre"),
-                        (int) row.get("releaseYear"),
-                        (int) row.get("quantity")
+                        rs.getString("Format"),
+                        rs.getInt("AlbumID"),
+                        rs.getString("AlbumTitle"),
+                        rs.getString("ArtistName"),
+                        rs.getString("Genre"),
+                        rs.getInt("ReleaseYear"),
+                        rs.getInt("Quantity")
                 );
-
                 albums.add(album);
             }
 
@@ -62,7 +53,8 @@ public class AlbumDAO {
     public void addAlbum(String title, String artistName, String genre, int year, int quantity, String format) {
         String findArtistSql = "SELECT ArtistID FROM Artist WHERE ArtistName = ?";
         String insertArtistSql = "INSERT INTO Artist (ArtistName) VALUES (?)";
-        String insertAlbumSql = "INSERT INTO Album (ArtistID, AlbumTitle, Genre, ReleaseYear, Quantity, Format) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertAlbumSql = "INSERT INTO Album (ArtistID, AlbumTitle, Genre, ReleaseYear, Price, Format) VALUES (?, ?, ?, ?, 15.00, ?)";
+        String insertInventorySql = "INSERT INTO Inventory (LocationID, AlbumID, Quantity) VALUES (1, ?, ?)";
 
         try {
             Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -85,14 +77,22 @@ public class AlbumDAO {
             }
 
             // Insert the Album
-            PreparedStatement insertAlbumStmt = conn.prepareStatement(insertAlbumSql);
+            PreparedStatement insertAlbumStmt = conn.prepareStatement(insertAlbumSql, PreparedStatement.RETURN_GENERATED_KEYS);
             insertAlbumStmt.setInt(1, artistId);
             insertAlbumStmt.setString(2, title);
             insertAlbumStmt.setString(3, genre);
             insertAlbumStmt.setInt(4, year);
-            insertAlbumStmt.setInt(5, quantity);
-            insertAlbumStmt.setString(6, format); // Assuming you added Format for the Factory pattern
+            insertAlbumStmt.setString(5, format);
             insertAlbumStmt.executeUpdate();
+            
+            ResultSet albumKeys = insertAlbumStmt.getGeneratedKeys();
+            albumKeys.next();
+            int newAlbumId = albumKeys.getInt(1);
+
+            PreparedStatement insertInvStmt = conn.prepareStatement(insertInventorySql);
+            insertInvStmt.setInt(1, newAlbumId);
+            insertInvStmt.setInt(2, quantity);
+            insertInvStmt.executeUpdate();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,7 +101,7 @@ public class AlbumDAO {
 
     // UPDATE: Change the quantity of an existing album
     public void updateAlbumQuantity(int albumID, int newQuantity) {
-        String sql = "UPDATE Album SET Quantity = ? WHERE AlbumID = ?";
+        String sql = "UPDATE Inventory SET Quantity = ? WHERE AlbumID = ?";
         try {
             Connection conn = DatabaseConnection.getInstance().getConnection();
             PreparedStatement stmt = conn.prepareStatement(sql);
